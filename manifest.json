@@ -1,0 +1,10 @@
+{
+  "id": "kumoo-calendar",
+  "name": "Kumoo Calendar",
+  "version": "1.0.1",
+  "minAppVersion": "0.15.0",
+  "description": "日历视图：阳历/农历、黄历宜忌与12时辰吉凶、全库文件活动时间线。Calendar with lunar dates, almanac luck hours, and file activity timeline.",
+  "author": "KuMoo",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}
