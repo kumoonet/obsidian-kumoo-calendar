@@ -1,0 +1,1264 @@
+/* ============================================================
+   Kumoo Calendar v1.0.0 - styles.css
+   素观 SuGuan v1.8.0（桌面工具 Profile）：
+   - 灰度主导（#1a1a1a → #767676 五级），语义色限 3 种（绿=新建/宜/吉/休，红=忌/凶，琥珀=班）
+   - 交互色唯一：#2563eb（今天、可点击）
+   - 主题色默认近黑 #1a1a1a（选中日深色块 = 一击），无渐变/装饰阴影
+   - 圆角 4-6px，边框统一 #d4d4d4，弱分隔 #eee
+   修订（2026-08-09）：下半部分（黄历+文件列表）整体滚动；去紫色系
+   ============================================================ */
+
+/* ---------- CSS 变量（浅色/跟随 Obsidian 默认） ---------- */
+:root {
+  --calendar-primary: #1a1a1a;
+  --calendar-primary-hover: #333333;
+  --calendar-accent: #2563eb;            /* 唯一交互色：今天、可点击 */
+  --calendar-bg: #ffffff;                 /* 卡片白底 */
+  --calendar-bg-subtle: #f5f5f0;          /* 暖灰：面板头部、表头 */
+  --calendar-bg-hover: #fafafa;
+  --calendar-border: #d4d4d4;
+  --calendar-border-light: #eeeeee;
+  --calendar-text: #1a1a1a;
+  --calendar-text-secondary: #555555;
+  --calendar-text-muted: #767676;
+  --calendar-weekend-color: #767676;      /* 周末文字淡灰（素观 L4a，WCAG 达标） */
+  --calendar-green: #16a34a;
+  --calendar-red: #f85149;
+  --calendar-amber: #d97706;              /* 调休"班"标记（深琥珀，4.8:1） */
+  --calendar-hover: rgba(26, 26, 26, 0.05);
+  --calendar-today-bg: #2563eb;
+  --calendar-today-text: #ffffff;
+  --calendar-badge-bg: #f0f0f0;           /* badge-data：浅灰底（素观） */
+  --calendar-badge-text: #555555;
+  --calendar-font-family: inherit;
+  --calendar-font-size: 13px;
+}
+
+/* ---------- 容器：白底卡片，1px 边框，6px 圆角，无阴影 ---------- */
+.view-content.kumoo-calendar-view {
+  background-color: var(--calendar-bg);
+  border: 1px solid var(--calendar-border);
+  border-radius: 6px;
+  padding: 10px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  font-family: var(--calendar-font-family);
+  font-size: var(--calendar-font-size);
+  color: var(--calendar-text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important; /* 上半固定 + 下半整体滚动；!important 对抗 app.css 后注入的 view-content overflow 规则 */
+}
+
+/* ---------- 深色主题（跟随 Obsidian 深色） ---------- */
+.kumoo-calendar-view.calendar-theme-dark {
+  --calendar-bg: #1e1e1e;
+  --calendar-bg-subtle: #262626;
+  --calendar-bg-hover: #262626;
+  --calendar-border: rgba(255, 255, 255, 0.12);
+  --calendar-border-light: rgba(255, 255, 255, 0.08);
+  --calendar-text: #dcddde;
+  --calendar-text-secondary: #a0a0a0;
+  --calendar-text-muted: #8a8a8a;
+  --calendar-weekend-color: #8a8a8a;
+  --calendar-hover: rgba(255, 255, 255, 0.06);
+  --calendar-accent: #60a5fa;   /* 深色下交互色提亮保对比 */
+  --calendar-green: #4ade80;
+  --calendar-red: #f87171;
+  --calendar-amber: #fbbf24;
+  --calendar-badge-bg: rgba(255, 255, 255, 0.08);
+  --calendar-badge-text: #a0a0a0;
+}
+
+/* ---------- 浅色主题（跟随 Obsidian 浅色） ---------- */
+.kumoo-calendar-view.calendar-theme-light {
+  --calendar-bg: #ffffff;
+  --calendar-border: #d4d4d4;
+  --calendar-border-light: #eeeeee;
+  --calendar-text: #1a1a1a;
+  --calendar-text-secondary: #555555;
+  --calendar-text-muted: #767676;
+}
+
+/* ---------- 日历头部 ---------- */
+.calendar-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--calendar-border-light);
+  position: relative;
+}
+
+.calendar-nav-group {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  position: absolute;
+  top: 0;
+  z-index: 1;
+}
+
+.calendar-nav-left { left: 0; }
+.calendar-nav-right { right: 0; }
+
+/* 标题组 — 两行：公历年月+季度 / 农历年月 */
+.calendar-title-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+}
+
+.calendar-title {
+  font-size: calc(var(--calendar-font-size) * 1.15);
+  font-weight: 600;
+  color: var(--calendar-text);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+}
+
+/* 农历标题（注意：与 view.ts 的 calendar-lunar-title 类名一致） */
+.calendar-lunar-title {
+  font-size: calc(var(--calendar-font-size) * 0.85);
+  font-weight: 400;
+  color: var(--calendar-text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  line-height: 1.3;
+}
+
+/* ---------- 按钮：无边框文字/细边框，hover 灰底 ---------- */
+.calendar-btn {
+  background: none !important;
+  border: none !important;
+  padding: 2px 6px;
+  cursor: pointer;
+  color: var(--calendar-text-secondary);
+  transition: color 0.15s ease-out, background-color 0.15s ease-out;
+  font-size: var(--calendar-font-size);
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+
+.calendar-btn:hover {
+  color: var(--calendar-text);
+  background: var(--calendar-bg-hover) !important;
+  box-shadow: none !important;
+}
+
+.calendar-btn:active,
+.calendar-btn:focus {
+  background: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.calendar-nav-btn {
+  font-size: calc(var(--calendar-font-size) * 1.05);
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 4px !important;
+  border: 1px solid transparent !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.calendar-nav-btn:hover {
+  background-color: var(--calendar-bg-hover) !important;
+  border-color: var(--calendar-border) !important;
+  color: var(--calendar-text) !important;
+}
+
+/* "今"按钮：细边框，激活态深色块 */
+.calendar-today-btn {
+  padding: 3px 10px !important;
+  font-size: calc(var(--calendar-font-size) * 0.8);
+  font-weight: 500;
+  background: transparent !important;
+  color: var(--calendar-text-secondary) !important;
+  border: 1px solid var(--calendar-border) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-right: 4px;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+
+/* 手机版：强制高度防止与星期表头重叠 */
+@media (max-width: 768px) {
+  .calendar-today-btn {
+    padding: 0 8px !important;
+    height: 22px !important;
+    line-height: 20px !important;
+    font-size: calc(var(--calendar-font-size) * 0.75);
+  }
+}
+
+.calendar-today-btn:not(.calendar-today-btn-selected):hover {
+  background: var(--calendar-bg-hover) !important;
+  border-color: #999999 !important;
+  color: var(--calendar-text) !important;
+}
+
+.calendar-btn.calendar-today-btn-selected {
+  background: var(--calendar-primary) !important;
+  color: #ffffff !important;
+  border-color: var(--calendar-primary) !important;
+}
+
+.calendar-btn.calendar-today-btn-selected:hover {
+  background: var(--calendar-primary-hover) !important;
+  border-color: var(--calendar-primary-hover) !important;
+  color: #ffffff !important;
+}
+
+/* ---------- 日历网格 ---------- */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: 32px repeat(7, 1fr);
+  /* 网格共 7 行：第 1 行=周表头(auto)，第 2-7 行=日历 6 行。
+     日历行最小 58px（padding 4px → 内容区 54px）：
+     三层分布——农历居中(~17-26px) → 节日(42-50px, bottom:12px) → 圆点(52-54px, bottom:1px)，各层间距 ≥4px。
+     1fr 在 auto 高度容器中会退化为内容高度导致行高被压扁，必须 minmax 保底 */
+  grid-template-rows: auto repeat(6, minmax(58px, 1fr));
+  column-gap: 2px;
+  row-gap: 2px;
+  position: relative;
+}
+
+.calendar-grid::before {
+  content: '';
+  position: absolute;
+  left: 32px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--calendar-border-light);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.calendar-week-number-header {
+  text-align: center;
+  font-size: calc(var(--calendar-font-size) * 0.77);
+  font-weight: 500;
+  color: var(--calendar-text-muted);
+  padding: 2px 0;
+  position: relative;
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-week-number {
+  text-align: center;
+  padding: 0;
+  font-size: calc(var(--calendar-font-size) * 0.72);
+  color: var(--calendar-text-muted);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: calc(var(--calendar-font-size) * 0.85);
+  font-weight: 600;
+  color: var(--calendar-text-secondary);
+  padding: 2px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-weekday.calendar-weekend {
+  color: var(--calendar-weekend-color);
+  font-weight: 400;
+}
+
+/* ---------- 日期单元格 ---------- */
+.calendar-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;  /* 阳历靠上，下方留空间给农历/节日/圆点分层 */
+  padding: 6px 1px 2px;         /* 上6px(紧凑) 下2px(贴底元素留边) */
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: var(--calendar-font-size);
+  transition: background-color 0.15s ease-out, color 0.15s ease-out;
+  color: var(--calendar-text);
+  position: relative;
+  box-sizing: content-box;
+  overflow: hidden;
+}
+
+.calendar-day:hover {
+  background-color: var(--calendar-hover);
+}
+
+.calendar-day-text {
+  font-size: var(--calendar-font-size);
+  font-weight: 500;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-day-lunar {
+  font-size: calc(var(--calendar-font-size) * 0.62);
+  color: var(--calendar-text-muted);
+  line-height: 1;
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+/* 节日/节气：灰字；绝对定位贴底区域(10px)，不占文档流（保证日期数字对齐）。
+   三层分布(50px内容区实测)：农历(底≈215px) → 节日(top≈220px, bottom:10px) → 圆点(top≈235px, bottom:1px)
+   农历与节日间距约 5px，节日与圆点间距约 7px */
+.calendar-day-festival {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: calc(var(--calendar-font-size) * 0.62);
+  color: var(--calendar-text-muted);
+  line-height: 1;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* 调休标记：休=绿（正向）、班=琥珀（注意） */
+.calendar-holiday-marker {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: calc(var(--calendar-font-size) * 0.6);
+  font-weight: 500;
+  line-height: 1;
+  border: 1px solid;
+  border-radius: 2px;
+  padding: 0 2px;
+  pointer-events: none;
+}
+
+.calendar-holiday-rest {
+  color: var(--calendar-green);
+  border-color: var(--calendar-green);
+}
+
+.calendar-holiday-work {
+  color: var(--calendar-amber);
+  border-color: var(--calendar-amber);
+}
+
+/* 非当前月日期：淡灰 */
+.calendar-day-other {
+  color: var(--calendar-text-muted);
+  opacity: 0.45;
+}
+
+/* 今天：交互蓝 + 底部短线（素观：蓝色=唯一交互锚点） */
+.calendar-day-today {
+  background-color: transparent;
+  color: var(--calendar-accent);
+  font-weight: 600;
+}
+
+.calendar-day-today::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background-color: var(--calendar-accent);
+}
+
+.calendar-day-today:hover:not(.calendar-day-selected) {
+  background-color: var(--calendar-hover);
+  color: var(--calendar-accent);
+}
+
+/* 今天+有活动点：底部蓝线与圆点重叠，隐藏蓝线（今天标识由蓝色文字承担） */
+.calendar-day-today.calendar-day-today-with-dots::after {
+  content: none;
+}
+
+/* 选中日：深色块 + 白字（素观"一击"：克制中的精确断裂） */
+.calendar-day-selected {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 4px;
+}
+
+.kumoo-calendar-view.calendar-theme-dark .calendar-day-selected {
+  background-color: #3f3f3f; /* 深色底上深色块不可见，用中灰提亮 */
+  color: #ffffff;
+}
+
+.calendar-day-selected .calendar-day-lunar,
+.calendar-day-selected .calendar-day-festival {
+  color: #b3b3b3; /* 深色块内辅助文字（素观深色块副句 #aaa） */
+}
+
+.calendar-day-selected.calendar-day-today {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.kumoo-calendar-view.calendar-theme-dark .calendar-day-selected.calendar-day-today {
+  background-color: #3f3f3f;
+}
+
+.calendar-day-selected.calendar-day-today::after {
+  content: none; /* 选中态用深色块标识，隐藏蓝色短线 */
+}
+
+.calendar-day-selected:hover {
+  background-color: #1a1a1a;
+}
+
+.kumoo-calendar-view.calendar-theme-dark .calendar-day-selected:hover {
+  background-color: #3f3f3f;
+}
+
+/* 周末日期：灰字（去红色系） */
+.calendar-day-weekend:not(.calendar-day-today):not(.calendar-day-selected) {
+  color: var(--calendar-weekend-color);
+}
+
+/* 周末调休上班：恢复正色 */
+.calendar-day-weekend:not(.calendar-day-today).calendar-day-weekend-work {
+  color: var(--calendar-text);
+}
+
+/* 周内放假：绿字（休息=正向状态） */
+.calendar-day-holiday-rest-color:not(.calendar-day-today):not(.calendar-day-selected) {
+  color: var(--calendar-green);
+}
+
+.calendar-day-today.calendar-day-weekend {
+  color: var(--calendar-accent);
+}
+
+/* ---------- 活动圆点：绿=新建，蓝=更新，琥珀=有计划笔记（4px 信号点，素观语法②） ---------- */
+.calendar-note-dots {
+  position: absolute;
+  bottom: 1px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.calendar-note-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.calendar-note-dot-created {
+  background-color: var(--calendar-green);
+}
+
+.calendar-note-dot-updated {
+  background-color: var(--calendar-accent);
+}
+
+/* 灰=删除信号（v1.0.0 二十一修订）：中性灰不挤占绿/蓝/琥珀三语义色，
+   删除是"文件消失"的终结态，用无彩度灰色表达 */
+.calendar-note-dot-deleted {
+  background-color: #999999;
+}
+
+/* 选中日深色块上灰点提亮，保证深底可见 */
+.calendar-day-selected .calendar-note-dot-deleted {
+  background-color: #aaaaaa;
+}
+
+/* 琥珀=计划信号：当天有 日记/周记/月度/季度/年度 任一计划笔记（素观 4.3 琥珀=计划/待办；与"班"字同色，形态区分） */
+.calendar-note-dot-plan {
+  background-color: var(--calendar-amber);
+}
+
+/* 选中日深色块上的计划点提亮，保证深底可见 */
+.calendar-day-selected .calendar-note-dot-plan {
+  background-color: #fbbf24;
+}
+
+/* ---------- 下半部分：黄历 + 文件列表 整体滚动容器 ---------- */
+.calendar-notes-list {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--calendar-border-light);
+  flex: 1 1 auto;
+  min-height: 0;          /* flex 子项默认 min-height:auto 会撑破容器导致无法滚动 */
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;       /* 黄历、标题、文件列表全部在此容器内滚动 */
+}
+
+/* ---------- 日期标题区 ---------- */
+.calendar-notes-title-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+/* 行1: 按钮组(左) + 标题(绝对居中) */
+.calendar-notes-header-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;   /* 标题 absolute 居中的定位基准 */
+}
+
+.calendar-notes-title {
+  font-size: calc(var(--calendar-font-size) * 1.0);
+  font-weight: 600;
+  text-align: center;
+  color: var(--calendar-text);
+  font-variant-numeric: tabular-nums;
+  /* 绝对定位真正居中:相对 headerRow(全宽) 的 50% 位置 */
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  pointer-events: none;   /* 不阻挡按钮点击 */
+  white-space: nowrap;
+}
+
+/* 按钮组改为 inline 布局,不再 absolute */
+.calendar-btn-group-inline {
+  position: static !important;
+  flex-shrink: 0;
+}
+
+/* 行2: 农历(居中) */
+.calendar-notes-lunar {
+  font-size: calc(var(--calendar-font-size) * 0.8);
+  color: var(--calendar-text-muted);
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* 行3: 筛选下拉(左) + 统计行(右) */
+.calendar-notes-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.calendar-notes-filter {
+  flex-shrink: 0;
+}
+
+.calendar-notes-stats {
+  font-size: calc(var(--calendar-font-size) * 0.72);
+  font-weight: 400;
+  color: var(--calendar-text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.calendar-notes-stats-total {
+  color: var(--calendar-text-muted);
+}
+
+/* 统计行状态开关：默认灰底灰字（badge-data），激活=深色块白字（素观 6.6 筛选按钮激活态） */
+.calendar-notes-stats-toggle {
+  background: var(--calendar-badge-bg);
+  color: var(--calendar-badge-text);
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.calendar-notes-stats-toggle:hover {
+  border-color: #999999;
+}
+
+.calendar-notes-stats-toggle-active,
+.calendar-notes-stats-toggle-active:hover {
+  background: #1a1a1a;
+  color: #ffffff;
+  border-color: #1a1a1a;
+}
+
+.kumoo-calendar-view.calendar-theme-dark .calendar-notes-stats-toggle-active,
+.kumoo-calendar-view.calendar-theme-dark .calendar-notes-stats-toggle-active:hover {
+  background: #3f3f3f;
+  border-color: #3f3f3f;
+}
+
+/* ---------- 创建笔记按钮组：浅灰 pill（素观 badge-data 风格，随主题变量） ---------- */
+.calendar-create-btn-group {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.calendar-create-note-btn {
+  background: var(--calendar-badge-bg);
+  color: var(--calendar-badge-text);
+  border: none;
+  border-radius: 4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.15s, color 0.15s;
+  line-height: 1;
+}
+
+.calendar-create-note-btn:hover {
+  background: var(--calendar-bg-hover);
+  border: 1px solid var(--calendar-border);
+  color: var(--calendar-text);
+}
+
+.calendar-create-note-btn:active {
+  transform: scale(0.95);
+}
+
+/* ---------- 文件活动列表项 ---------- */
+.calendar-notes-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.calendar-note-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s ease-out;
+  border: 1px solid transparent;
+}
+
+.calendar-note-item:hover {
+  background-color: var(--calendar-bg-hover);
+}
+
+.calendar-note-item-ext {
+  flex-shrink: 0;
+  background-color: var(--calendar-badge-bg);
+  color: var(--calendar-badge-text);
+  font-size: calc(var(--calendar-font-size) * 0.62);
+  font-weight: 600;
+  border-radius: 3px;
+  padding: 1px 4px;
+  line-height: 1.5;
+  max-width: 44px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.calendar-note-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.calendar-note-item-title {
+  font-size: calc(var(--calendar-font-size) * 0.92);
+  font-weight: 500;
+  color: var(--calendar-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-note-item-path {
+  font-size: calc(var(--calendar-font-size) * 0.72);
+  color: var(--calendar-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-note-item-right {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.calendar-note-item-time {
+  font-size: calc(var(--calendar-font-size) * 0.68);
+  color: var(--calendar-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 类型标签：新建=绿淡底深绿字（状态色），更新=灰底灰字（badge-data） */
+.calendar-note-item-tag {
+  flex-shrink: 0;
+  font-size: calc(var(--calendar-font-size) * 0.68);
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.calendar-note-tag-created {
+  background: rgba(22, 163, 74, 0.08);
+  color: #166534;
+}
+
+.kumoo-calendar-view.calendar-theme-dark .calendar-note-tag-created {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+}
+
+.calendar-note-tag-updated {
+  background: var(--calendar-badge-bg);
+  color: var(--calendar-badge-text);
+}
+
+/* 删除标签：与灰圆点同语义的中性灰 */
+.calendar-note-tag-deleted {
+  background: rgba(153, 153, 153, 0.12);
+  color: #737373;
+}
+
+.kumoo-calendar-view.calendar-theme-dark .calendar-note-tag-deleted {
+  background: rgba(170, 170, 170, 0.16);
+  color: #aaaaaa;
+}
+
+/* 空状态 */
+.calendar-notes-empty {
+  text-align: center;
+  padding: 14px 0;
+  color: var(--calendar-text-muted);
+  font-size: calc(var(--calendar-font-size) * 0.85);
+}
+
+/* ---------- 滚动条（细、灰） ---------- */
+.calendar-notes-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.calendar-notes-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.calendar-notes-list::-webkit-scrollbar-thumb {
+  background: var(--calendar-border);
+  border-radius: 2px;
+}
+
+.calendar-notes-list::-webkit-scrollbar-thumb:hover {
+  background: var(--calendar-text-muted);
+}
+
+/* ---------- 文件夹选择器（设置弹窗） ---------- */
+.calendar-folder-list {
+  max-height: 220px;
+  overflow-y: auto;
+  background-color: var(--background-secondary);
+  border: 1px solid var(--calendar-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  box-sizing: border-box;
+}
+
+.calendar-folder-item {
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: var(--calendar-font-size);
+  color: var(--calendar-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendar-folder-item:hover {
+  background-color: var(--calendar-hover);
+}
+
+.calendar-folder-item-active {
+  background-color: var(--calendar-primary);
+  color: #ffffff;
+}
+
+.calendar-folder-item-selected {
+  background-color: var(--calendar-hover);
+  color: var(--calendar-primary);
+}
+
+.calendar-folder-empty {
+  padding: 8px 10px;
+  color: var(--calendar-text-muted);
+  font-size: calc(var(--calendar-font-size) * 0.9);
+  cursor: default;
+}
+
+.calendar-folder-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-right: 2px;
+  border-radius: 4px;
+  color: var(--calendar-text-muted);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.calendar-folder-arrow:hover {
+  background-color: var(--calendar-hover);
+  color: var(--calendar-primary);
+}
+
+.calendar-folder-arrow-placeholder {
+  cursor: default;
+}
+
+.calendar-folder-arrow-placeholder:hover {
+  background-color: transparent;
+  color: var(--calendar-text-muted);
+}
+
+/* ---------- 文件活动筛选行（素观：小尺寸下拉，无原生外观，箭头随状态变色） ----------
+   注意：Obsidian app.css 后注入，其全局 select / select:hover 规则会覆盖本样式，
+   故选择器用 (0,2,0) 并给背景加 !important，保证白底黑字不被深色主题吞掉 */
+.calendar-notes-filter {
+  display: flex;
+  gap: 6px;
+  margin: 2px 0 4px;
+}
+
+/* 板块下拉：自适应宽度（不再平分整行），超长截断 */
+.calendar-notes-list .calendar-filter-select {
+  flex: 0 1 auto;
+  max-width: 100%;
+  min-width: 0;
+  font-size: calc(var(--calendar-font-size) * 0.8);
+  color: var(--calendar-text-secondary) !important;
+  background-color: var(--calendar-bg) !important;
+  border: 1px solid var(--calendar-border) !important;
+  border-radius: 4px;
+  padding: 3px 18px 3px 6px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23767676' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 5px center;
+  background-size: 10px 6px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.calendar-notes-list .calendar-filter-select:hover,
+.calendar-notes-list .calendar-filter-select:focus {
+  outline: none;
+  /* 背景必须显式锁回卡片底色，否则 Obsidian 深色主题的 select:hover 会盖成黑底 */
+  background-color: var(--calendar-bg) !important;
+  /* 素观 6.6 筛选按钮：hover 边框 #999（L4b 专用用途），不用交互蓝——蓝仅保留"今天/可点击"锚点 */
+  border-color: #999999 !important;
+  color: var(--calendar-text) !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23555555' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+
+/* 暗色主题模式：箭头提亮（跟随 dark 变量，hover 用中灰） */
+.kumoo-calendar-view.calendar-theme-dark .calendar-filter-select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%238a8a8a' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+
+.kumoo-calendar-view.calendar-theme-dark .calendar-filter-select:hover,
+.kumoo-calendar-view.calendar-theme-dark .calendar-filter-select:focus {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23c0c0c0' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+
+/* ---------- 相关笔记摘要区（素观：subtle 底卡片，灰 badge 类型标，无彩色） ---------- */
+.calendar-plan-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.calendar-plan-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  border: 1px solid var(--calendar-border-light);
+  border-radius: 4px;
+  background: var(--calendar-bg-subtle);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.calendar-plan-note:hover {
+  background: var(--calendar-bg-hover);
+  border-color: var(--calendar-border);
+}
+
+.calendar-plan-note-type {
+  flex-shrink: 0;
+  background: var(--calendar-badge-bg);
+  color: var(--calendar-badge-text);
+  font-size: calc(var(--calendar-font-size) * 0.62);
+  font-weight: 600;
+  border-radius: 3px;
+  padding: 1px 4px;
+  line-height: 1.5;
+}
+
+.calendar-plan-note-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.calendar-plan-note-title {
+  font-size: calc(var(--calendar-font-size) * 0.85);
+  font-weight: 500;
+  color: var(--calendar-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-plan-note-snippet {
+  font-size: calc(var(--calendar-font-size) * 0.72);
+  color: var(--calendar-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 设置面板分组（沿用原结构，色值跟变量） ---------- */
+.calendar-settings-section-title {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 4px 0;
+  transition: color 0.15s;
+}
+
+.calendar-settings-section-title::before {
+  content: '▾';
+  font-size: 12px;
+  color: var(--calendar-text-muted);
+  transition: transform 0.15s;
+}
+
+.calendar-settings-section-title:hover {
+  color: var(--calendar-primary);
+}
+
+.calendar-settings-section-title:hover::before {
+  color: var(--calendar-primary);
+}
+
+.calendar-settings-section-collapsed > .setting-item {
+  display: none;
+}
+
+.calendar-settings-section-collapsed .calendar-settings-section-title {
+  margin-bottom: 4px;
+}
+
+.calendar-settings-section-collapsed .calendar-settings-section-title::before {
+  content: '▸';
+}
+
+.calendar-reset-all-btn {
+  margin-top: 24px;
+  border-top: 1px solid var(--calendar-border);
+  padding-top: 16px;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 560px) {
+  .view-content.kumoo-calendar-view {
+    --calendar-font-size: 12px !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .view-content.kumoo-calendar-view {
+    --calendar-font-size: 10px !important;
+  }
+  .calendar-grid {
+    grid-template-columns: 26px repeat(7, 1fr);
+  }
+  .calendar-grid::before {
+    left: 26px;
+  }
+}
+
+/* ---------- 文件历史搜索弹窗（素观：灰度主导，蓝仅锚点） ---------- */
+.calendar-fh-modal .calendar-fh-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border: 1px solid var(--calendar-border);
+  border-radius: 4px;
+  background: var(--calendar-bg);
+  color: var(--calendar-text);
+  font-size: calc(var(--calendar-font-size) * 0.95);
+  outline: none;
+}
+
+.calendar-fh-modal .calendar-fh-input:focus {
+  border-color: #999;
+}
+
+.calendar-fh-modal .calendar-fh-results {
+  margin-top: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.calendar-fh-modal .calendar-fh-hit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.calendar-fh-modal .calendar-fh-hit:hover {
+  background: var(--calendar-badge-bg);
+}
+
+.calendar-fh-modal .calendar-fh-hit-title {
+  font-size: calc(var(--calendar-font-size) * 0.95);
+  color: var(--calendar-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  max-width: 45%;
+}
+
+.calendar-fh-modal .calendar-fh-hit-path {
+  font-size: calc(var(--calendar-font-size) * 0.8);
+  color: var(--calendar-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.calendar-fh-modal .calendar-fh-hit-count {
+  font-size: calc(var(--calendar-font-size) * 0.8);
+  color: var(--calendar-text-muted);
+  flex-shrink: 0;
+}
+
+/* 时间线视图 */
+.calendar-fh-modal .calendar-fh-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.calendar-fh-modal .calendar-fh-back {
+  border: 1px solid var(--calendar-border);
+  background: var(--calendar-bg);
+  color: var(--calendar-text-muted);
+  border-radius: 4px;
+  padding: 2px 10px;
+  cursor: pointer;
+  font-size: calc(var(--calendar-font-size) * 0.85);
+}
+
+.calendar-fh-modal .calendar-fh-back:hover {
+  border-color: #999;
+  color: var(--calendar-text);
+}
+
+.calendar-fh-modal .calendar-fh-title {
+  font-weight: 600;
+  font-size: calc(var(--calendar-font-size) * 1.05);
+  color: var(--calendar-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+}
+
+.calendar-fh-modal .calendar-fh-status {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border-radius: 3px;
+  font-size: calc(var(--calendar-font-size) * 0.8);
+}
+
+.calendar-fh-modal .calendar-fh-status-ok {
+  background: rgba(22, 163, 74, 0.08);
+  color: #166534;
+}
+
+.calendar-fh-modal .calendar-fh-status-gone {
+  background: rgba(153, 153, 153, 0.12);
+  color: #737373;
+}
+
+.calendar-fh-modal .calendar-fh-path {
+  margin-top: 4px;
+  font-size: calc(var(--calendar-font-size) * 0.8);
+  color: var(--calendar-text-muted);
+  word-break: break-all;
+}
+
+.calendar-fh-modal .calendar-fh-list {
+  margin-top: 10px;
+  border-top: 1px solid var(--calendar-border-light);
+}
+
+.calendar-fh-modal .calendar-fh-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 4px;
+  border-bottom: 1px solid var(--calendar-border-light);
+  font-size: calc(var(--calendar-font-size) * 0.9);
+}
+
+.calendar-fh-modal .calendar-fh-item[style*="cursor"], .calendar-fh-modal .calendar-fh-item {
+  cursor: default;
+}
+
+.calendar-fh-modal .calendar-fh-item:hover {
+  background: var(--calendar-badge-bg);
+}
+
+.calendar-fh-modal .calendar-fh-item-type {
+  flex-shrink: 0;
+  width: 34px;
+  text-align: center;
+  padding: 1px 0;
+  border-radius: 3px;
+  font-size: calc(var(--calendar-font-size) * 0.8);
+}
+
+.calendar-fh-modal .calendar-fh-type-created {
+  background: rgba(22, 163, 74, 0.08);
+  color: #166534;
+}
+
+.calendar-fh-modal .calendar-fh-type-updated {
+  background: var(--calendar-badge-bg);
+  color: var(--calendar-badge-text);
+}
+
+.calendar-fh-modal .calendar-fh-type-deleted {
+  background: rgba(153, 153, 153, 0.12);
+  color: #737373;
+}
+
+.calendar-fh-modal .calendar-fh-item-date {
+  color: var(--calendar-text);
+}
+
+.calendar-fh-modal .calendar-fh-item-time {
+  color: var(--calendar-text-muted);
+}
+
+.calendar-fh-modal .calendar-fh-empty {
+  padding: 12px 0;
+  text-align: center;
+  color: var(--calendar-text-muted);
+  font-size: calc(var(--calendar-font-size) * 0.85);
+}
+
+.kumoo-calendar-view.calendar-theme-dark .calendar-fh-status-ok {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+}
+
+.kumoo-calendar-view.calendar-theme-dark .calendar-fh-type-created {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+}
+
+.kumoo-calendar-view.calendar-theme-dark .calendar-fh-type-deleted,
+.kumoo-calendar-view.calendar-theme-dark .calendar-fh-status-gone {
+  background: rgba(170, 170, 170, 0.16);
+  color: #aaaaaa;
+}
